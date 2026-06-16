@@ -1,0 +1,38 @@
+# Staging override of INFRA-IBMMQ_MANAGER-to-INFRA-IBMMQ_QUEUE.yml. OTel-only.
+relationships:
+  # OpenTelemetry pipeline. Source manager GUID built from
+  # targetName + ibmmq.queue_manager.name with FARM_HASH to match
+  # the OTel manager synthesis rule's encodeIdentifierInGUID: true.
+  - name: ibmMqManagerManagesIbmMqQueueStg
+    version: "1"
+    origins:
+      - OpenTelemetry
+    conditions:
+      - attribute: eventType
+        anyOf: [ "MetricRaw" ]
+      - attribute: entity.type
+        anyOf: [ "IBMMQQUEUE" ]
+      - attribute: instrumentation.provider
+        anyOf: [ "opentelemetry" ]
+    relationship:
+      expires: PT75M
+      relationshipType: MANAGES
+      source:
+        buildGuid:
+          account:
+            attribute: accountId
+          domain:
+            value: INFRA
+          type:
+            value: IBMMQ_MANAGER
+          identifier:
+            fragments:
+              - attribute: "targetName"
+              - value: ":"
+              - attribute: "ibmmq.queue_manager.name"
+            hashAlgorithm: FARM_HASH
+      target:
+        extractGuid:
+          attribute: entity.guid
+          entityType:
+            value: IBMMQQUEUE
